@@ -7,4 +7,4 @@ respawn
 setuid django
 setgid django
 chdir {{ django_home }}/django/
-exec /usr/local/bin/uwsgi --http {{ address }}:8500  --chdir {{ django_home }}django -w example.wsgi
+exec /usr/local/bin/uwsgi --http {{ ansible_default_ipv4.address }}:8500  --chdir {{ django_home }}django -w example.wsgi
