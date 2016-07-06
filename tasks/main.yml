@@ -58,7 +58,7 @@
   command: python setup.py develop
   args:
     chdir: "{{ django_home }}/django/"
-  become_user: django
+#  become_user: django
 
 - name: npm install under user
   command: npm install
