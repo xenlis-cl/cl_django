@@ -1,0 +1,104 @@
+---
+
+- name: Install django deps
+  apt:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    #for download sample app
+    - git-core
+    - nodejs-legacy
+    - npm
+    # deps
+    - python-pip
+    # pillow 3+ dependencies.
+    - python-dev
+    - python-setuptools
+    - libtiff5-dev
+    - libjpeg8-dev
+    - zlib1g-dev
+    - libfreetype6-dev
+    - liblcms2-dev
+    - libwebp-dev
+    - tcl8.6-dev
+    - tk8.6-dev
+    - python-tk
+
+#clean previous installation
+- command: "rm -rf {{ django_home }}/django"
+
+
+#add user django
+- user: name=django shell=/bin/bash home=/{{ django_home }}
+
+#install Django from pip
+- pip: name=Django version=1.9.7
+
+#Install application
+- git: repo=https://github.com/kevinastone/django-api-rest-and-angular dest={{ django_home }}/django/ force=yes
+
+#fix ownership
+- file: dest={{ django_home }} owner=django group=django recurse=yes
+
+#install requirements of app
+- pip: requirements=/{{ django_home }}/django/requirements.txt
+
+- name: install node.js deps
+  npm:
+    name: "{{ item }}"
+    global: yes
+  with_items:
+    - grunt-cli
+    - bower
+
+#npm install under user
+- command: npm install
+  args:
+    chdir: "{{ django_home }}/django/"
+  become_user: django
+
+#bower install
+- command: bower install
+  args:
+    chdir: "{{ django_home }}/django/"
+  become_user: django
+
+#grunt
+- command: grunt
+  args:
+    chdir: "{{ django_home }}/django/"
+  become_user: django
+
+
+#database
+- command: make create_database
+  args:
+    chdir: "{{ django_home }}/django/"
+  become_user: django
+
+- command: make make_fixtures
+  args:
+    chdir: "{{ django_home }}/django/"
+  become_user: django
+
+
+  #temporary for debug
+#- shell: python2.7 manage.py runserver 0.0.0.0:8000
+#  args:
+#    chdir: "{{ django_home }}/django-api-rest-and-angular/"
+#  become_user: django
+
+
+
+#for second part task
+#- name: wordpress rsync script install
+#  when: moving_data == '1'
+#  template:
+#      src=wordpress_rsync.sh.j2
+#      dest=/usr/local/bin/wordpress_rsync.sh
+
+
+#- name: setting up correct permitions to the script rsync
+#  when: moving_data == '1'
+#  file: path=/usr/local/bin/wordpress_rsync.sh mode=0755
+
