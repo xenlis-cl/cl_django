@@ -99,6 +99,8 @@
   notify:
     - reload uwsgi
 
+- name: service uwsgi start
+  service: name=uwsgi state=started
 
   #temporary for debug
 #- shell: python2.7 manage.py runserver 0.0.0.0:8000
