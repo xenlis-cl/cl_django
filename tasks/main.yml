@@ -24,24 +24,27 @@
     - tk8.6-dev
     - python-tk
 
-#clean previous installation
-- command: "rm -rf {{ django_home }}/django"
+- name: clean previous installation
+  command: "rm -rf {{ django_home }}/django"
 
 
-#add user django
-- user: name=django shell=/bin/bash home=/{{ django_home }}
+- name: add user django
+  user: name=django shell=/bin/bash home=/{{ django_home }}
 
-#install Django from pip
-- pip: name=Django version=1.9.7
+- name: install Django from pip
+  pip: name=Django version=1.9.7
 
-#Install application
-- git: repo=https://github.com/kevinastone/django-api-rest-and-angular dest={{ django_home }}/django/ force=yes
+- name: Install wsgi
+  pip: name=uwsgi
 
-#fix ownership
-- file: dest={{ django_home }} owner=django group=django recurse=yes
+- name: Install application
+  git: repo=https://github.com/kevinastone/django-api-rest-and-angular dest={{ django_home }}/django/ force=yes
 
-#install requirements of app
-- pip: requirements=/{{ django_home }}/django/requirements.txt
+- name: Fix ownership
+  file: dest={{ django_home }} owner=django group=django recurse=yes
+
+- name: install requirements of app
+  pip: requirements=/{{ django_home }}/django/requirements.txt
 
 - name: install node.js deps
   npm:
@@ -51,35 +54,50 @@
     - grunt-cli
     - bower
 
-#npm install under user
-- command: npm install
+- name: python setup.py develop
+  command: python setup.py develop
   args:
     chdir: "{{ django_home }}/django/"
   become_user: django
 
-#bower install
-- command: bower install
+- name: npm install under user
+  command: npm install
   args:
     chdir: "{{ django_home }}/django/"
   become_user: django
 
-#grunt
-- command: grunt
+- name: bower install
+  command: bower install
+  args:
+    chdir: "{{ django_home }}/django/"
+  become_user: django
+
+- name: grunt
+  command: grunt
   args:
     chdir: "{{ django_home }}/django/"
   become_user: django
 
 
-#database
-- command: make create_database
+- name: database
+  command: make create_database
   args:
     chdir: "{{ django_home }}/django/"
   become_user: django
 
-- command: make make_fixtures
+- name: second step of setupping database
+  command: make make_fixtures
   args:
     chdir: "{{ django_home }}/django/"
   become_user: django
+
+
+- name: push uwsgi.conf
+  template:
+      src=uwsgi.conf.j2
+      dest=/etc/init/uwsgi.conf
+  notify:
+    - reload uwsgi
 
 
   #temporary for debug
